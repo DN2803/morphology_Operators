@@ -3,6 +3,8 @@ from tkinter import filedialog, messagebox, ttk
 from PIL import Image, ImageTk
 import numpy as np
 from scipy.ndimage import binary_dilation, binary_erosion
+
+from binary.non_lib import header_non_lib
 import os
 
 def grayscale_to_binary(image_path, threshold):
@@ -103,11 +105,20 @@ class ImageProcessorApp:
             if not np.all(np.logical_or(struct_array == 0, struct_array == 1)):
                 messagebox.showerror("Error", "Structuring element should contain only 0s and 1s.")
                 return
-            if self.operation_var.get() == "Dilation":
-                self.processed_image = binary_dilation(self.image, structure=struct_array)
-            else:
-                self.processed_image = binary_erosion(self.image, structure=struct_array)
-            # Convert the processed NumPy array to a PIL Image object
+            
+
+            if self.use_library_var.get():
+                print ("tu viet")
+                src_image = np.array(self.image)
+                self.processed_image = header_non_lib.binary_morphology(src_image, struct_array, self.operation_var.get())
+                print(self.processed_image)
+                
+            else: 
+                if self.operation_var.get() == "Dilation":
+                    self.processed_image = binary_dilation(self.image, structure=struct_array)
+                else:
+                    self.processed_image = binary_erosion(self.image, structure=struct_array)
+                # Convert the processed NumPy array to a PIL Image object
             self.processed_image = Image.fromarray(self.processed_image.astype(np.uint8) * 255)
 
             self.display_processed_image()
