@@ -4,7 +4,8 @@ from PIL import Image, ImageTk
 import numpy as np
 from scipy.ndimage import binary_dilation, binary_erosion
 
-from binary.non_lib import header_non_lib
+from binary.non_lib import header_non_lib as binary_non_lib
+from grayscale.non_lib import header_non_lib as gray_non_lib
 import os
 
 def grayscale_to_binary(image_path, threshold):
@@ -106,11 +107,11 @@ class ImageProcessorApp:
                 messagebox.showerror("Error", "Structuring element should contain only 0s and 1s.")
                 return
             
-
+        if self.import_type_var.get() == "Binary": 
             if self.use_library_var.get():
                 print ("tu viet")
                 src_image = np.array(self.image)
-                self.processed_image = header_non_lib.binary_morphology(src_image, struct_array, self.operation_var.get())
+                self.processed_image = binary_non_lib.binary_morphology(src_image, struct_array, self.operation_var.get())
                 print(self.processed_image)
                 
             else: 
@@ -120,8 +121,14 @@ class ImageProcessorApp:
                     self.processed_image = binary_erosion(self.image, structure=struct_array)
                 # Convert the processed NumPy array to a PIL Image object
             self.processed_image = Image.fromarray(self.processed_image.astype(np.uint8) * 255)
-
             self.display_processed_image()
+        else:
+            if self.use_library_var.get():
+                print ("tu viet")
+                src_image = np.array(self.image)
+                self.processed_image = gray_non_lib.grayscale_morphology(src_image, struct_array, self.operation_var.get())
+                print(self.processed_image)
+            self.processed_image = Image.fromarray(self.processed_image.astype(np.uint8))
             self.display_processed_image()
 
     def save_image(self):
