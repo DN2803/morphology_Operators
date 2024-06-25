@@ -1,6 +1,7 @@
 import cv2
+import numpy as np
 def grayscale_morphology(image, structuring_element, typeofOperator = "Dilation"):
-    result = []
+    result = np.zeros_like(image)
     if (typeofOperator == "Dilation"):
         return cv2.dilate(image, structuring_element)
     elif (typeofOperator == "Erosion"): 
@@ -24,5 +25,13 @@ def grayscale_morphology(image, structuring_element, typeofOperator = "Dilation"
         opened = cv2.morphologyEx(image, cv2.MORPH_OPEN, structuring_element)
         return closed - opened
     elif (typeofOperator == "Recontruction"): 
-        return result
+        recon = np.copy(image)
+        # Lặp lại quá trình tái tạo cho đến khi không còn thay đổi
+        while not np.array_equal(prev, recon):
+            prev = np.copy(recon)
+            # Áp dụng toán dilation giữa G và B
+            dilation = cv2.dilate(recon, structuring_element, iterations = 1 )
+            # Áp dụng toán erosion giữa kết quả và ảnh đầu vào f
+            recon = cv2.bitwise_and(dilation, image)
+        return recon
     return result
