@@ -195,10 +195,10 @@ class ImageProcessorApp:
             self.display_processed_image()
         else:
             if not self.use_library_var.get():
-                print ("tu viet")
+
                 
                 self.processed_image = gray_non_lib.grayscale_morphology(src_image, struct_array, self.process_option_var.get())
-                print(self.processed_image)
+
             else:
                 self.processed_image = gray_lib.grayscale_morphology(src_image, struct_array, self.process_option_var.get())
             self.processed_image = Image.fromarray(self.processed_image.astype(np.uint8))

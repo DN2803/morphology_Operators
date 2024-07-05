@@ -1,7 +1,7 @@
-from opening import opening
-from closing import closing
+from . import opening
+from . import closing
 
 def smoothing(image, structuring_element):
-    result = opening(image, structuring_element)
-    result = closing(result, structuring_element)
+    result = opening.opening(image, structuring_element)
+    result = closing.closing(result, structuring_element)
     return result

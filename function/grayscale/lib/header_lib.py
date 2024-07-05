@@ -24,8 +24,9 @@ def grayscale_morphology(image, structuring_element, typeofOperator = "Dilation"
         closed = cv2.morphologyEx(image, cv2.MORPH_CLOSE, structuring_element)
         opened = cv2.morphologyEx(image, cv2.MORPH_OPEN, structuring_element)
         return closed - opened
-    elif (typeofOperator == "Recontruction"): 
+    elif (typeofOperator == "Reconstruction"): 
         recon = np.copy(image)
+        prev = np.copy(recon)
         # Lặp lại quá trình tái tạo cho đến khi không còn thay đổi
         while not np.array_equal(prev, recon):
             prev = np.copy(recon)
