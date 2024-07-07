@@ -183,9 +183,11 @@ class ImageProcessorApp:
         src_image = np.array(self.image)
         if self.import_type_var.get() == "Binary": 
             if not self.use_library_var.get():
-                print ("tu viet")
+                # print ("tu viet")
                 self.processed_image = binary_non_lib.binary_morphology(src_image, struct_array, self.process_option_var.get())
+                print(self.processed_image)
                 self.processed_image = Image.fromarray(self.processed_image.astype(np.uint8)* 255)
+                
             else: 
                 
                 self.processed_image = binary_lib.binary_morphology(src_image, struct_array, self.process_option_var.get())

@@ -1,78 +1,39 @@
 import numpy as np
-def thin (image):
-    skeleton = np.zeros(image.shape, np.uint8)
-    skeleton[image > 0] = 1 # Lấy ảnh nền đen và chuyển thành ảnh trắng
-    skeleton = 1 - skeleton # Đảo ngược ảnh để tiện thao tác
+"""
+Zhang-Suen thinning algorithm
+"""
+def neighbours(x, y, image):
+    """Return 8-neighbours of image point P1(x,y), in a clockwise order"""
+    img = image
+    return [img[x-1, y], img[x-1, y+1], img[x, y+1], img[x+1, y+1], img[x+1, y], 
+            img[x+1, y-1], img[x, y-1], img[x-1, y-1]]
 
-    while True:
-        to_delete = []
 
-        # Step 1: Loại bỏ các điểm không cần thiết
-        for i in range(1, skeleton.shape[0] - 1):
-            for j in range(1, skeleton.shape[1] - 1):
-                if skeleton[i][j] == 0:
-                    continue
+def transitions(neighbours):
+    """No. of 0,1 patterns (transitions from 0 to 1) in the ordered sequence of neighbours"""
+    n = neighbours + neighbours[0:1]  # to create a cyclic sequence
+    return sum((n1, n2) == (0, 1) for n1, n2 in zip(n, n[1:]))
 
-                # Tính số lượng điểm lân cận
-                neighbors = [skeleton[i-1][j], skeleton[i-1][j+1], skeleton[i][j+1],
-                             skeleton[i+1][j+1], skeleton[i+1][j], skeleton[i+1][j-1],
-                             skeleton[i][j-1], skeleton[i-1][j-1]]
 
-                # Kiểm tra số lượng điểm lân cận có thoả mãn yêu cầu không
-                if sum(neighbors) < 2 or sum(neighbors) > 6:
-                    continue
+def thinning_iteration(image, iter):
+    marker = np.zeros(image.shape, dtype=np.uint8)
+    for i in range(1, image.shape[0] - 1):
+        for j in range(1, image.shape[1] - 1):
+            P2, P3, P4, P5, P6, P7, P8, P9 = neighbours(i, j, image)
+            C = image[i, j]
+            if (C == 1 and 
+                2 <= sum(neighbours(i, j, image)) <= 6 and 
+                transitions(neighbours(i, j, image)) == 1 and 
+                (P2 * P4 * P6 == 0 if iter == 0 else P2 * P4 * P8 == 0) and 
+                (P4 * P6 * P8 == 0 if iter == 0 else P2 * P6 * P8 == 0)):
+                marker[i, j] = 1
+    image[marker == 1] = 0
 
-                # Kiểm tra số lượng điểm lân cận thay đổi từ 0 sang 1 có chính xác 1 lần không
-                trans = 0
-                for k in range(len(neighbors) - 1):
-                    if neighbors[k] == 0 and neighbors[k+1] == 1:
-                        trans += 1
-                if neighbors[-1] == 0 and neighbors[0] == 1:
-                    trans += 1
 
-                if trans != 1:
-                    continue
-
-                to_delete.append((i, j))
-
-        # Xóa các điểm không cần thiết
-        for i, j in to_delete:
-            skeleton[i][j] = 0
-
-        # Step 2: Loại bỏ các điểm không cần thiết
-        to_delete = []
-        for i in range(1, skeleton.shape[0] - 1):
-            for j in range(1, skeleton.shape[1] - 1):
-                if skeleton[i][j] == 0:
-                    continue
-
-                # Tính số lượng điểm lân cận
-                neighbors = [skeleton[i-1][j], skeleton[i-1][j+1], skeleton[i][j+1],
-                             skeleton[i+1][j+1], skeleton[i+1][j], skeleton[i+1][j-1],
-                             skeleton[i][j-1], skeleton[i-1][j-1]]
-
-                # Kiểm tra số lượng điểm lân cận có thoả mãn yêu cầu không
-                if sum(neighbors) < 2 or sum(neighbors) > 6:
-                    continue
-
-                # Kiểm tra số lượng điểm lân cận thay đổi từ 0 sang 1 có chính xác 1 lần không
-                trans = 0
-                for k in range(len(neighbors) - 1):
-                    if neighbors[k] == 0 and neighbors[k+1] == 1:
-                        trans += 1
-                if neighbors[-1] == 0 and neighbors[0] == 1:
-                    trans += 1
-
-                if trans != 1:
-                    continue
-
-                to_delete.append((i, j))
-
-        for i, j in to_delete:
-            skeleton[i][j] = 0
-
-        if len(to_delete) == 0:
-            break
-
-    skeleton = 1 - skeleton
-    return skeleton
+def thinning(image):
+    prev_image = np.zeros(image.shape, np.uint8)
+    while not np.array_equal(image, prev_image):
+        prev_image = image.copy()
+        thinning_iteration(image, 0)
+        thinning_iteration(image, 1)
+    return image

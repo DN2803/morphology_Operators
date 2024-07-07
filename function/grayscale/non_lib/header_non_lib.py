@@ -8,9 +8,10 @@ from . import tophat
 from . import segmentation
 from . import granulometry
 from . import reconstruction
+import numpy as np
 
 def grayscale_morphology(image, structuring_element, typeofOperator = "Dilation"):
-    result = []
+    result = np.zeros_like(image)
     if (typeofOperator == "Dilation"):
         return dilation.dilation(image, structuring_element)
     elif (typeofOperator == "Erosion"): 
@@ -30,5 +31,7 @@ def grayscale_morphology(image, structuring_element, typeofOperator = "Dilation"
     elif (typeofOperator == "Granulometry"): 
         return granulometry.granulometry(image, structuring_element)
     elif (typeofOperator == "Reconstruction"): 
-        return reconstruction.reconstruction_dilation(image, structuring_element)
+        seed = np.copy(image)
+        seed[1:-1, 1:-1] = image.min()
+        return reconstruction.reconstruction_dilation(seed, image, structuring_element)
     return result

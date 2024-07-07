@@ -1,7 +1,11 @@
 import cv2.ximgproc
 import cv2, numpy as np
+from ..non_lib import region_filling
+from skimage.morphology import skeletonize, reconstruction, thin
+from skimage.filters import threshold_otsu
+from skimage import measure
 def binary_morphology(image, structuring_element, typeofOperator = "Dilation"):
-    result = []
+    result = np.zeros_like(image)
     kernel = np.matrix(structuring_element, np.uint8) 
     if (typeofOperator == "Dilation"):
         return cv2.dilate(image, kernel, iterations = 1)
@@ -17,9 +21,24 @@ def binary_morphology(image, structuring_element, typeofOperator = "Dilation"):
         erode = cv2.erode(image, structuring_element, iterations = 1)  #co đối tượng lại
         return image - erode   #áp dụng công thức
     elif (typeofOperator == "Region Filling"): 
-        return result
+        # Make a copy of the input image to avoid modifying the original image
+        image_copy = image.copy().astype(np.uint8)
+        
+        # Define the mask, with a 1-pixel border around the original image
+        h, w = image_copy.shape
+        mask = np.zeros((h+2, w+2), np.uint8)
+        seedPoint = region_filling.find_seed_bounding_box_center(image)
+        # Use floodFill to fill the region
+        cv2.floodFill(image_copy, mask, seedPoint, newVal=255)
+    
+        return image_copy
     elif (typeofOperator == "Extraction of Connected Components"): 
-        return result
+        threshold_value = threshold_otsu(image)
+
+        # Convert the image to binary using the threshold
+        binary_image = image > threshold_value
+        return measure.label(binary_image)*255
+
     
     elif (typeofOperator == "Convex Hull"):
         blur = cv2.blur(image, (3, 3)) #blur the image
@@ -48,13 +67,28 @@ def binary_morphology(image, structuring_element, typeofOperator = "Dilation"):
             cv2.drawContours(drawing, hull, i, color, 1, 8)
         return drawing
     elif (typeofOperator == "Thinning"): 
-        return cv2.ximgproc.thinning(image, None, cv2.ximgproc.THINNING_ZHANGSUEN)
+        thinning_image= thin(image)
+        result = np.zeros_like(thinning_image, dtype=np.uint8)
+        result[thinning_image] = 255
+        return result
+        
     elif (typeofOperator == "Thickening"): 
         return result
-    elif (typeofOperator == "Skeletons"): 
+    elif (typeofOperator == "Skeleton"): 
+        skeleted =  skeletonize(image)
+        result = np.zeros_like(skeleted, dtype=np.uint8)
+        result[skeleted] = 255
         return result
     elif (typeofOperator == "Reconstruction"): 
-        return result
+        threshold_value = threshold_otsu(image)
+
+        # Convert the image to binary using the threshold
+        binary_image = image > threshold_value
+        mask = np.resize(structuring_element, binary_image.shape)
+        seed = np.zeros_like(binary_image)
+        seed[mask > 0] = binary_image[mask > 0]
+
+        return reconstruction(seed, binary_image,method='dilation')*255
     elif (typeofOperator == "Pruning"): 
         return result
     

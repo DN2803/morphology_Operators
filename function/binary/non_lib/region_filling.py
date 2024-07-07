@@ -1,38 +1,47 @@
-def region_fill(image, start_pixel = (100, 100), fill_color = 100):
- # create a copy of the input image
-    filled_image = image.copy()
+import numpy as np
+from scipy.ndimage import find_objects
+from scipy.ndimage import label
+from . import dilation
+def find_seed_bounding_box_center(image):
+    """
+    Find the seed point as the center of the bounding box of the foreground region.
+    
+    Parameters:
+    image: np.ndarray
+        The binary input image.
+        
+    Returns:
+    seed_point: tuple
+        The (row, column) coordinates of the seed point.
+    """
+    labeled_image, num_features = label(image)
+    slices = find_objects(labeled_image)
+    
+    # Assuming the first labeled object is the target region
+    bbox = slices[0]
+    
+    bbox_center = ((bbox[0].start + bbox[0].stop) // 2, (bbox[1].start + bbox[1].stop) // 2)
+    
+    return bbox_center
 
-    # get the dimensions of the input image
-    height, width = filled_image.shape[:2]
+def region_fill(image, structuring_element):
+    seed_point = find_seed_bounding_box_center(image)
+    print (seed_point)
+    # Create a marker image with the seed point
+    marker = image
+    #marker[seed_point] = 1
+    
 
-    # define the directions we will search around the start_pixel
-    directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]
+    
+    marker = dilation.dilation(marker, structuring_element)
+    marker = marker & np.logical_not(image)
+    
+    # Iteratively dilate the marker image and intersect with the original image
+    prev_marker = np.zeros_like(marker)
+    while not np.array_equal(marker, prev_marker):
+        prev_marker = marker.copy()
+        marker = dilation.dilation(marker, structuring_element)
+        marker = marker & np.logical_not(image)
+    return marker 
 
-    # create a queue to keep track of pixels to be filled
-    queue = [start_pixel]
-
-    # get the color of the start_pixel
-    start_color = filled_image[start_pixel[0], start_pixel[1]]
-
-    # loop until the queue is empty
-    while queue:
-        # get the next pixel to fill
-        x, y = queue.pop(0)
-
-        # if the pixel is outside the image, skip it
-        if x < 0 or x >= height or y < 0 or y >= width:
-            continue
-
-        # if the pixel has already been filled or does not match the start color, skip it
-        if filled_image[x, y] == fill_color or filled_image[x, y] != start_color:
-            continue
-
-        # fill the pixel with the fill color
-        filled_image[x, y] = fill_color
-
-        # add the neighboring pixels to the queue to be filled
-        for dx, dy in directions:
-            queue.append((x + dx, y + dy))
-
-    # return the filled image
-    return filled_image
+        

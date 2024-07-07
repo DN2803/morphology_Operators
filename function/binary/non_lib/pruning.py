@@ -1,2 +1,2 @@
-def pruning():
+def pruning(image, struc):
     pass
