@@ -2,8 +2,7 @@
 `Morphology functions` là một chương trình có giao diện đơn giản để thử nghiệm một số phép biến đổi morphology cho ảnh nhị phân và ảnh mức xám. 
 ## Cấu trúc thư mục
 - `src:`
-  - `data/`
-    - `basic.py`: Chứa các hàm tính toán thống kê cơ bản.
+  - `data/`:  chứa các ảnh để kiểm thử cho chương trình của chúng tôi
   - `function/`
     - `binary/`:
         - `lib/`:  Chứa các hàm morphology cho ảnh nhị phân có sẵn trong các thư viện opencv, skimage, ...
