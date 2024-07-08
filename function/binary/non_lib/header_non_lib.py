@@ -13,6 +13,7 @@ from . import skeletons
 from . import pruning
 from . import reconstruction
 import numpy as np
+import cv2
 def gray2binary(gray):
     return (127 < gray) & (gray <= 255)
 def binary_morphology(image, structuring_element, typeofOperator = "Dilation"):
@@ -31,22 +32,44 @@ def binary_morphology(image, structuring_element, typeofOperator = "Dilation"):
         return boundary_extraction.boundary_extraction(image, structuring_element)
         
     elif (typeofOperator == "Region Filling"): 
-        return region_filling.region_fill(image, structuring_element )
+        # Invert floodfilled image
+        floodfilled_image = region_filling.region_fill(gray2binary(image))
+        image_copy = floodfilled_image.astype(np.uint8)
+        
+        im_floodfill_inv = cv2.bitwise_not(image_copy)
+        print (im_floodfill_inv)
+        # Combine the two images to get the foreground.
+        im_out = gray2binary(image) | (im_floodfill_inv -254)
+        return  im_out
+
     elif (typeofOperator == "Extraction of Connected Components"): 
-        return connect_components.connect_components(image, structuring_element)
-    
+
+        # Convert the image to binary using the threshold
+        binary_image = gray2binary(image)
+
+        num_labels, labels = connect_components.connect_components(image)
+
+        # Create an output image where each component has a different color
+        output_image = np.zeros((binary_image.shape[0], binary_image.shape[1], 3), dtype=np.uint8)
+
+        # Map component labels to colors
+        for label in range(1, num_labels):
+            mask = labels == label
+            output_image[mask] = np.random.randint(0, 255, size=3)
+        return output_image
+
     elif (typeofOperator == "Convex Hull"):
         return convex_hull.convex_hull(image)
     elif (typeofOperator == "Thinning"): 
 
         return thinning.thinning(gray2binary(image))
     elif (typeofOperator == "Thickening"): 
-        return result
+        return thickening.thickening(image)
     elif (typeofOperator == "Skeletons"): 
         return skeletons.skeletons(image,structuring_element)
     elif (typeofOperator == "Reconstruction"): 
         return reconstruction.reconstruction(image, structuring_element)
     elif (typeofOperator == "Pruning"): 
-        return result
+        return pruning.prune(image)
     
     return result

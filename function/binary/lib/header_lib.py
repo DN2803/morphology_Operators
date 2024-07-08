@@ -30,15 +30,28 @@ def binary_morphology(image, structuring_element, typeofOperator = "Dilation"):
         seedPoint = region_filling.find_seed_bounding_box_center(image)
         # Use floodFill to fill the region
         cv2.floodFill(image_copy, mask, seedPoint, newVal=255)
-    
-        return image_copy
+        # Invert floodfilled image
+        im_floodfill_inv = cv2.bitwise_not(image_copy)
+        
+        # Combine the two images to get the foreground.
+        im_out = image | im_floodfill_inv
+        return im_out
     elif (typeofOperator == "Extraction of Connected Components"): 
         threshold_value = threshold_otsu(image)
 
         # Convert the image to binary using the threshold
         binary_image = image > threshold_value
-        return measure.label(binary_image)*255
 
+        num_labels, labels = cv2.connectedComponents(image)
+
+        # Create an output image where each component has a different color
+        output_image = np.zeros((binary_image.shape[0], binary_image.shape[1], 3), dtype=np.uint8)
+
+        # Map component labels to colors
+        for label in range(1, num_labels):
+            mask = labels == label
+            output_image[mask] = np.random.randint(0, 255, size=3)
+        return output_image
     
     elif (typeofOperator == "Convex Hull"):
         blur = cv2.blur(image, (3, 3)) #blur the image

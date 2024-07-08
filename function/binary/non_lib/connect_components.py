@@ -1,45 +1,35 @@
 import numpy as np
 from scipy.ndimage import find_objects
-from scipy.ndimage import label
-from . import dilation
-def find_seed_bounding_box_center(image):
-    """
-    Find the seed point as the center of the bounding box of the foreground region.
-    
-    Parameters:
-    image: np.ndarray
-        The binary input image.
-        
-    Returns:
-    seed_point: tuple
-        The (row, column) coordinates of the seed point.
-    """
-    labeled_image, num_features = label(image)
-    slices = find_objects(labeled_image)
-    
-    # Assuming the first labeled object is the target region
-    bbox = slices[0]
-    
-    bbox_center = ((bbox[0].start + bbox[0].stop) // 2, (bbox[1].start + bbox[1].stop) // 2)
-    
-    return bbox_center
-def connect_components( image, structuring_element):
+from scipy.ndimage import label, binary_dilation
 
-    seed_point = find_seed_bounding_box_center(image)
-    print (seed_point)
-    # Create a marker image with the seed point
-    marker = np.zeros_like(image, dtype=bool)
-    marker[seed_point] = True
+
+def connect_components(binary_image):
+    struct_elem = np.array([[1, 1, 1],
+                            [1, 1, 1],
+                            [1, 1, 1]], dtype=int)
+
+    label = 1
+    labels = np.zeros_like(binary_image)
     
- 
-    marker = dilation.dilation(marker, structuring_element)
-    marker = marker & image
+    # Copy the binary image
+    working_image = binary_image.copy()
     
-    # Iteratively dilate the marker image and intersect with the original image
-    prev_marker = np.zeros_like(marker)
-    while not np.array_equal(marker, prev_marker):
-        prev_marker = marker.copy()
-        marker = dilation.dilation(marker, structuring_element)
-        marker = marker & image
+    while np.any(working_image):
+        # Find a seed pixel
+        seed = np.zeros_like(working_image)
+        seed[np.unravel_index(np.argmax(working_image), working_image.shape)] = 1
         
-    return marker 
+        component = seed
+        while True:
+            new_component = binary_dilation(component, struct_elem)
+            new_component = new_component & binary_image
+            if np.array_equal(new_component, component):
+                break
+            component = new_component
+        
+        # Label the component
+        labels[component == 1] = label
+        working_image[component == 1] = 0
+        label += 1
+    
+    return label - 1, labels
