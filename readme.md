@@ -11,7 +11,7 @@
         - `lib/`:  Chứa các hàm morphology cho ảnh mức xám có sẵn trong các thư viện 
         - `non_lib/`: Chứa các hàm morphology cho ảnh mức xám tự cài đặt, chỉ sử dụng thư viện numpy để hỗ trợ các phép tính trên ma trận. 
     - `UI.py`: Giao diện cho chương trình của chúng tôi 
-- `test.ipynb`: Tệp Jupyter Notebook để kiểm thử và minh họa cách sử dụng các mô-đun.
+
 
 ## Cài đặt
 Đảm bảo bạn đã cài đặt các thư viện cần thiết:
